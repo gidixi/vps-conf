@@ -116,11 +116,17 @@ TEMP_CONFIG=$(mktemp /tmp/wg-config-XXXXXX.conf)
 trap "rm -f $TEMP_CONFIG" EXIT
 
 print_warn "Incolla la configurazione del client WireGuard qui sotto."
-print_warn "Premi Ctrl+D quando hai finito di incollare (o Ctrl+Z su Windows, poi 'fg' e Ctrl+D)."
+print_warn "Premi Ctrl+D quando hai finito di incollare."
 print_info ""
 
 # Chiedi all'utente di incollare la configurazione
+# Usa /dev/tty per leggere direttamente dal terminale (funziona anche con pipe)
+# Reindirizza l'output degli errori per evitare problemi
+exec 3<&0
+exec 0< /dev/tty
 cat > "$TEMP_CONFIG"
+exec 0<&3
+exec 3<&-
 
 # Leggi il contenuto del file temporaneo
 CONFIG_CONTENT=$(cat "$TEMP_CONFIG")
