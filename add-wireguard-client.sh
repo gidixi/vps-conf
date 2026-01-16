@@ -105,107 +105,27 @@ fi
 WG_DIR="/etc/wireguard"
 mkdir -p "$WG_DIR"
 
-# Crea un file temporaneo per la configurazione
-TEMP_CONFIG=$(mktemp /tmp/wg-config-XXXXXX.conf)
-trap "rm -f $TEMP_CONFIG" EXIT
-
 print_info ""
 print_info "=========================================="
 print_info "Configurazione WireGuard Client"
 print_info "=========================================="
 print_info ""
 print_warn "Incolla la configurazione del client WireGuard nel file:"
-print_info "$TEMP_CONFIG"
+print_info "$WG_DIR/wg0.conf"
 print_info ""
-print_warn "Puoi usare: nano $TEMP_CONFIG  oppure  vi $TEMP_CONFIG"
+print_warn "Comandi manuali:"
+print_info "  1. Crea/modifica il file:"
+print_info "     sudo nano $WG_DIR/wg0.conf"
 print_info ""
-read -p "Premi INVIO quando hai salvato la configurazione nel file... " < /dev/tty
-
-# Leggi il contenuto del file temporaneo
-CONFIG_CONTENT=$(cat "$TEMP_CONFIG")
-
-# Verifica che la configurazione non sia vuota
-CONFIG_CONTENT=$(echo "$CONFIG_CONTENT" | sed '/^[[:space:]]*$/d')  # Rimuovi righe vuote
-if [ -z "$CONFIG_CONTENT" ]; then
-    print_error "Nessuna configurazione fornita!"
-    exit 1
-fi
-
-# Verifica che la configurazione contenga [Interface] e PrivateKey
-if ! echo "$CONFIG_CONTENT" | grep -q "^\[Interface\]"; then
-    print_error "Configurazione non valida: sezione [Interface] non trovata"
-    exit 1
-fi
-
-if ! echo "$CONFIG_CONTENT" | grep -q "^PrivateKey"; then
-    print_error "Configurazione non valida: PrivateKey non trovato"
-    exit 1
-fi
-
-# Estrai il nome dell'interfaccia dal primo commento o usa un nome di default
-CONFIG_NAME=$(echo "$CONFIG_CONTENT" | head -1 | grep -oP '#\s*\K\w+' 2>/dev/null || echo "")
-
-# Se non trovato nel commento, prova a cercare un nome dopo [Interface]
-if [ -z "$CONFIG_NAME" ]; then
-    CONFIG_NAME=$(echo "$CONFIG_CONTENT" | grep -A 5 "^\[Interface\]" | grep -i "name\|interface" | head -1 | grep -oP '=\s*\K\w+' 2>/dev/null || echo "")
-fi
-
-# Rimuovi caratteri non validi dal nome
-CONFIG_NAME=$(echo "$CONFIG_NAME" | tr -cd '[:alnum:]-_')
-if [ -z "$CONFIG_NAME" ]; then
-    CONFIG_NAME="wg0"
-fi
-
-CONFIG_FILE="$WG_DIR/${CONFIG_NAME}.conf"
-
-# Verifica se il file esiste già
-if [ -f "$CONFIG_FILE" ]; then
-    print_warn "Il file $CONFIG_FILE esiste già."
-    read -p "Vuoi sovrascriverlo? (s/n): " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Ss]$ ]]; then
-        print_info "Installazione annullata."
-        exit 0
-    fi
-fi
-
-# Salva la configurazione
-print_info "Salvataggio configurazione in $CONFIG_FILE..."
-echo "$CONFIG_CONTENT" > "$CONFIG_FILE"
-chmod 600 "$CONFIG_FILE"
-
-print_info "Configurazione salvata con successo!"
-
-# Chiedi se avviare la connessione
+print_info "  2. Incolla la configurazione e salva (Ctrl+X, Y, INVIO)"
 print_info ""
-read -p "Vuoi avviare la connessione WireGuard ora? (s/n): " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Ss]$ ]]; then
-    print_info "Avvio connessione WireGuard..."
-    wg-quick up "$CONFIG_NAME"
-    
-    if [ $? -eq 0 ]; then
-        print_info "Connessione WireGuard avviata con successo!"
-        print_info "Interfaccia: $CONFIG_NAME"
-        
-        # Mostra lo stato
-        print_info ""
-        print_info "Stato connessione:"
-        wg show "$CONFIG_NAME"
-    else
-        print_error "Errore nell'avvio della connessione WireGuard"
-        exit 1
-    fi
-else
-    print_info "Per avviare manualmente la connessione, usa:"
-    print_info "  sudo wg-quick up $CONFIG_NAME"
-fi
-
+print_info "  3. Avvia la connessione:"
+print_info "     sudo wg-quick up wg0"
 print_info ""
-print_info "Comandi utili:"
-print_info "  Avvia:   sudo wg-quick up $CONFIG_NAME"
-print_info "  Ferma:   sudo wg-quick down $CONFIG_NAME"
-print_info "  Stato:   sudo wg show $CONFIG_NAME"
-print_info "  Log:     sudo journalctl -u wg-quick@$CONFIG_NAME -f"
+print_info "  4. Verifica lo stato:"
+print_info "     sudo wg show wg0"
 print_info ""
-print_info "Installazione completata!"
+print_info "  5. Per fermare:"
+print_info "     sudo wg-quick down wg0"
+print_info ""
+print_info "Installazione WireGuard completata!"
