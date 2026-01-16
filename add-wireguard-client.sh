@@ -105,28 +105,21 @@ fi
 WG_DIR="/etc/wireguard"
 mkdir -p "$WG_DIR"
 
+# Crea un file temporaneo per la configurazione
+TEMP_CONFIG=$(mktemp /tmp/wg-config-XXXXXX.conf)
+trap "rm -f $TEMP_CONFIG" EXIT
+
 print_info ""
 print_info "=========================================="
 print_info "Configurazione WireGuard Client"
 print_info "=========================================="
 print_info ""
-
-# Crea un file temporaneo per la configurazione
-TEMP_CONFIG=$(mktemp /tmp/wg-config-XXXXXX.conf)
-trap "rm -f $TEMP_CONFIG" EXIT
-
-print_warn "Incolla la configurazione del client WireGuard qui sotto."
-print_warn "Premi Ctrl+D quando hai finito di incollare."
+print_warn "Incolla la configurazione del client WireGuard nel file:"
+print_info "$TEMP_CONFIG"
 print_info ""
-
-# Chiedi all'utente di incollare la configurazione
-# Usa /dev/tty per leggere direttamente dal terminale (funziona anche con pipe)
-# Reindirizza l'output degli errori per evitare problemi
-exec 3<&0
-exec 0< /dev/tty
-cat > "$TEMP_CONFIG"
-exec 0<&3
-exec 3<&-
+print_warn "Puoi usare: nano $TEMP_CONFIG  oppure  vi $TEMP_CONFIG"
+print_info ""
+read -p "Premi INVIO quando hai salvato la configurazione nel file... " < /dev/tty
 
 # Leggi il contenuto del file temporaneo
 CONFIG_CONTENT=$(cat "$TEMP_CONFIG")
