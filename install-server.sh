@@ -5,9 +5,9 @@
 # Configurazione firewall: solo porte necessarie (SSH 22, HTTP 80, HTTPS 443, WireGuard 51820)
 #
 # Utilizzo:
-#   curl -fsSL https://raw.githubusercontent.com/gidixi/REPO/main/install-server.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/gidixi/vps-conf/refs/heads/main/install-server.sh | bash
 #   oppure
-#   wget -qO- https://raw.githubusercontent.com/gidixi/REPO/main/install-server.sh | bash
+#   wget -qO- https://raw.githubusercontent.com/gidixi/vps-conf/refs/heads/main/install-server.sh | bash
 
 set -euo pipefail
 
@@ -154,10 +154,7 @@ install_wireguard() {
     
     log_info "Installazione WireGuard..."
     
-    # Aggiungi repository WireGuard se necessario (per versioni più recenti)
-    add-apt-repository -y ppa:wireguard/wireguard 2>/dev/null || true
-    apt-get update -qq
-    
+    # WireGuard è disponibile nei repository ufficiali di Ubuntu/Debian
     apt-get install -y -qq \
         wireguard \
         wireguard-tools \
